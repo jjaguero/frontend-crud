@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getEmpleados, deleteEmpleado, createEmpleado, updateEmpleado } from './api/empleados';
 
-// Función para generar color de avatar basado en el nombre
+
 const generarColorAvatar = (nombre) => {
   const colores = [
     'bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 
@@ -29,7 +29,8 @@ function App() {
     nombre: '',
     sexo: '',
     ordenSalario: '',
-    ordenFechaIngreso: ''
+    fechaDesde: '',
+    fechaHasta: ''
   });
   const [filtrosAplicados, setFiltrosAplicados] = useState(false);
 
@@ -94,12 +95,22 @@ function App() {
     
     if (filtrosAplicados) {
       resultados = resultados.filter(empleado => {
-        return (
-          (filtros.nombre === '' || 
-           empleado.nombre.toLowerCase().includes(filtros.nombre.toLowerCase())) &&
-          (filtros.sexo === '' || 
-           empleado.sexo === filtros.sexo)
-        );
+        const cumpleNombre = filtros.nombre === '' || 
+          empleado.nombre.toLowerCase().includes(filtros.nombre.toLowerCase());
+        const cumpleSexo = filtros.sexo === '' || empleado.sexo === filtros.sexo;
+        
+        // Validación de rango de fechas
+        let cumpleFecha = true;
+        if (filtros.fechaDesde || filtros.fechaHasta) {
+          const fechaIngreso = new Date(empleado.fechaIngreso);
+          const desde = filtros.fechaDesde ? new Date(filtros.fechaDesde) : null;
+          const hasta = filtros.fechaHasta ? new Date(filtros.fechaHasta) : null;
+          
+          if (desde && fechaIngreso < desde) cumpleFecha = false;
+          if (hasta && fechaIngreso > hasta) cumpleFecha = false;
+        }
+        
+        return cumpleNombre && cumpleSexo && cumpleFecha;
       });
     }
 
@@ -107,12 +118,6 @@ function App() {
       resultados.sort((a, b) => a.salario - b.salario);
     } else if (filtros.ordenSalario === 'desc') {
       resultados.sort((a, b) => b.salario - a.salario);
-    }
-
-    if (filtros.ordenFechaIngreso === 'asc') {
-      resultados.sort((a, b) => new Date(a.fechaIngreso) - new Date(b.fechaIngreso));
-    } else if (filtros.ordenFechaIngreso === 'desc') {
-      resultados.sort((a, b) => new Date(b.fechaIngreso) - new Date(a.fechaIngreso));
     }
 
     return resultados;
@@ -129,7 +134,8 @@ function App() {
       nombre: '',
       sexo: '',
       ordenSalario: '',
-      ordenFechaIngreso: ''
+      fechaDesde: '',
+      fechaHasta: ''
     });
     setFiltrosAplicados(false);
     setPaginaActual(1);
@@ -189,6 +195,27 @@ function App() {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Fecha desde</label>
+                <input
+                  type="date"
+                  value={filtros.fechaDesde}
+                  onChange={(e) => setFiltros({...filtros, fechaDesde: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md shadow-sm py-1 px-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Fecha hasta</label>
+                <input
+                  type="date"
+                  value={filtros.fechaHasta}
+                  onChange={(e) => setFiltros({...filtros, fechaHasta: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md shadow-sm py-1 px-2 text-sm"
+                />
+              </div>
+            </div>
+
             <div className="flex flex-col sm:flex-row items-center gap-4 mt-4">
               <div className="w-full sm:w-auto">
                 <label className="block text-xs font-medium text-gray-500 mb-1">Ordenar salario</label>
@@ -202,19 +229,6 @@ function App() {
                   <option value="desc">Mayor a menor</option>
                 </select>
               </div>
-
-              <div className="w-full sm:w-auto">
-                <label className="block text-xs font-medium text-gray-500 mb-1">Ordenar por fecha</label>
-                <select
-                  value={filtros.ordenFechaIngreso}
-                  onChange={(e) => setFiltros({...filtros, ordenFechaIngreso: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md shadow-sm py-1 px-2 text-sm"
-                >
-                  <option value="">Sin orden</option>
-                  <option value="asc">Más antiguo primero</option>
-                  <option value="desc">Más reciente primero</option>
-                </select>
-              </div>
             </div>
 
             <div className="flex justify-end gap-3 mt-4">
@@ -224,7 +238,7 @@ function App() {
                   setPaginaActual(1);
                 }}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1 px-3 rounded-md text-sm"
-              >
+                >
                 Aplicar Filtros
               </button>
 
