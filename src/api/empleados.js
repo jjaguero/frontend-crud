@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://54.197.195.15/empleados';
+const API_URL = process.env.REACT_APP_API_URL;
 
 export const getEmpleados = async () => {
   try {
