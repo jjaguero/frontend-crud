@@ -14,7 +14,7 @@ Este proyecto es la interfaz frontend de un sistema CRUD de empleados, desarroll
 - Node.js v18
 - npm +v9
 
-## 🛠 Instalación y ejecución local
+## Instalación y ejecución local
 
 ### 1. Clona el repositorio:
    ```bash
